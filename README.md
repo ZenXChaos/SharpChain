@@ -46,6 +46,10 @@ The initial Block Hash should always equal 64 '0's .
 
 After running your applciation (which will build a database), do some hex-editing then run the application again :).
 
+## Blockchain Path
+
+You can set the Blockchain file path by setting SharpChain.basedir = ("c:\\path-to-file\\", "/var/usr/blockchains/")
+
 ### Indexing 
 
 Indexing allows you to more quickly obtain a block in the Blockchain file. The index file is located in the same folder as the Blockchain appended with an ".idx" extension.
