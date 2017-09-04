@@ -14,11 +14,11 @@ uint32 | 4 | Magic
 uint8 | 1 | Block format
 int | 4 | Timestamp (in seconds)
 uint32 | 4 | Data length
-data | ? | Arbitrary data
+data | Data.Length? | Arbitrary data
 byte[] | 64 | Previous hash
 byte[] | 64 | Block hash
 uint32 | 4 | Owner length
-byte[] | Owner.Length | Owner Text
+byte[] | Owner.Length?| Owner Text
 uint8 | 1 | Terminator / End of block
 
 ### Hash Calculation
