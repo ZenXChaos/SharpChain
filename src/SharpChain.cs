@@ -11,13 +11,13 @@ namespace SharpChainBlockChain
 {
     public class SharpChain
     {
-        public static UInt32 Magic { get; set; } // Blockchain Version
+        public UInt32 Magic { get; internal set; } // Blockchain Version
 
-        public string basedir;
+        public string basedir { get; internal set; }
 
-        public string ID { get; set; }
+        public string ID { get; internal set; }
 
-        public string db = String.Empty;
+        public string db { get; set;}
         
         public string Database
         {
@@ -30,9 +30,16 @@ namespace SharpChainBlockChain
             }
         }
 
-        public static string DatabaseIndexFormat = ".sidx"; // Blockchain Index Extension
+        public static string DatabaseIndexFormat // Blockchain Index Extension
+        {
+            get
+            {
+                return ".sidx";
+            }
+        }
 
         private List<SharpChainBlock> blocks { get; set; }
+
         public List<SharpChainBlock> Blocks
         {
             get
@@ -62,26 +69,27 @@ namespace SharpChainBlockChain
         public string SHA256_Master = "MASTER-HASH-VALUE"; // Can be anything. This secret is hashed on top of block byte data for extra security.
         public SharpChain(string ExistingGuid = null, string _basedir = "", string _SHA256_Master = "MASTER-HASH-VALUE")
         {
-            Magic = 0xD5E8A97F;
-            this.ID = ExistingGuid != null ? ExistingGuid : Guid.NewGuid().ToString();
-            this.db = ExistingGuid != null ? ExistingGuid : this.ID; // Assign GUID if not exists
-            this.basedir = _basedir;
+            this.Magic = 0xD5E8A97F;
+            this.db = String.Empty;
+            this.ID = ExistingGuid != null ? ExistingGuid : Guid.NewGuid().ToString(); // Assign GUID if not exists
+            this.db = this.ID; // Assign Database Filename = GUID
+            this.basedir = _basedir; // Set Base Directory
             this.blocks = new List<SharpChainBlock>();
 
-            this.SHA256_Master = _SHA256_Master;
+            this.SHA256_Master = _SHA256_Master; // Master Key; Hashed into all blocks
         }
 
         #region SharpChain Utils
         public List<SharpChainBlock> GetBlocks() // Get Blocks, Refresh?
         {
-            return this.ReadBlocks(true, true);
+            return this.ReadBlocks(true, true); // Read All Blocks, {Check Consistency, Copy File Before Reading}
         }
 
-        public bool SanityCheck() // Check For Inconsistencies In Blockchain
+        public bool SanityCheck(Dictionary<string, string> forceEQProps = null) // Check For Inconsistencies In Blockchain
         {
             if(!File.Exists(this.Database))
             {
-                return true;
+                return false;
             }
 
             var _Blocks = this.ReadBlocks(true, true, 0, 0, true);
@@ -93,7 +101,35 @@ namespace SharpChainBlockChain
             }
             catch(Exception e)
             {
-                Console.WriteLine(e.Message); // Actually successful !
+                Console.WriteLine(e.Message); // Psuedo Error, Actually successful !
+
+                if (forceEQProps == null)
+                    return true;
+
+                foreach(KeyValuePair<string, string> kvp in forceEQProps) // Each Block Must Have Property Equal To kvp
+                {
+                    try
+                    {
+                        Dictionary<string, string> data = null;
+
+                        
+                        for (int i = 0; i < _Blocks.Count; i++)
+                        {
+                            data = JsonConvert.DeserializeObject<Dictionary<string, string>>(_Blocks[i].Data); // Get Block Properties
+
+                            if (data[kvp.Key] != kvp.Value)
+                                return false; // Failed, Inconsistent With Forced Property
+                        }
+
+                        return true;
+                    }
+                    catch (Exception eK)
+                    {
+                        Console.WriteLine(eK.Message); // Error
+                        return false;
+                    }
+                }
+
                 return _Blocks != null; // If Blocks Not Null
             }
             
@@ -329,7 +365,7 @@ namespace SharpChainBlockChain
         {
             if (prevHash == null)
             {
-                prevHash = "0000000000000000000000000000000000000000000000000000000000000000";
+                prevHash = "0000000000000000000000000000000000000000000000000000000000000000"; // Genesis Hash
             }
 
             FileStream fs = File.Open(filename, FileMode.Append);
@@ -354,7 +390,7 @@ namespace SharpChainBlockChain
             SharpChainIndex.UpdateIndex(fs.Name, block, (int)fs.Length, bytesDataLength + data.Length + 139 + bytesOwnerDataLength + owner.Length);
 
             // Write to SharpChain
-            fs.Write(BitConverter.GetBytes(SharpChain.Magic), 0, 3); // Byte: 0
+            fs.Write(BitConverter.GetBytes(this.Magic), 0, 3); // Byte: 0
             fs.Write(BitConverter.GetBytes(BlockIndex), 0, 1); // Byte: 0
             fs.Write(BitConverter.GetBytes('\x01'), 0, 1); // Byte: 4
             fs.Write(BitConverter.GetBytes(time), 0, 4); //Byte: 5
@@ -389,7 +425,7 @@ namespace SharpChainBlockChain
                 if (!exists)
                 {
                     // Write Genesis Block
-                    WriteBlock(this.Database, jsonData, "Montray", "0000000000000000000000000000000000000000000000000000000000000000", 0);
+                    WriteBlock(this.Database, jsonData, Owner, "0000000000000000000000000000000000000000000000000000000000000000", 0);
                 }
                 else
                 {
@@ -398,7 +434,7 @@ namespace SharpChainBlockChain
                     
                     // Write A Block
                     string h = lastBlock != null ? lastBlock.Hash.Value : null;
-                    WriteBlock(this.Database, jsonData, "Montray", h, 0);
+                    WriteBlock(this.Database, jsonData, Owner, h, 0);
                 }
 
             }
