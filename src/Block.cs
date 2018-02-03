@@ -39,6 +39,11 @@ namespace SharpChainBlockChain
             return SharpChainHash.ComputeHash(this.TimeStamp, this.Hash.PreviousValue, this.Hash.Value, this.Owner, SHA256_Master);
         }
 
+        public string GetProperty(string prop)
+        {
+            return this.JsonData[prop] != null ? this.JsonData[prop] : String.Empty;
+        }
+
         public SharpChainBlock(int _Time = 0, string _Hash = "", string _PrevHash = "", string _Data = "", string _DataFile = "", string _Owner = null, bool _Inconsistent = false, SharpChainIndex _Index = null) // Constructor
         {
             this.TimeStamp = _Time;

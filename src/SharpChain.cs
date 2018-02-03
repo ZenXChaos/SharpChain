@@ -16,13 +16,17 @@ namespace SharpChainBlockChain
         public string basedir;
 
         public string ID { get; set; }
-        private string db = null;
+
+        public string db = String.Empty;
         
         public string Database
         {
             get
             {
-                return this.basedir + "Blockchain-" + this.db;
+                if (this.db == String.Empty)
+                    this.db = "sc";
+
+                return this.basedir + "Blockchain-" + this.db + "-";
             }
         }
 
@@ -321,7 +325,7 @@ namespace SharpChainBlockChain
         #endregion
 
         #region SharpChain Writing
-        public void WriteBlock(string filename, string data, string owner, string prevHash, int BlockIndex) // (Physical) Write Block to Blockchain
+        private void WriteBlock(string filename, string data, string owner, string prevHash, int BlockIndex) // (Physical) Write Block to Blockchain
         {
             if (prevHash == null)
             {
